@@ -1,0 +1,6 @@
+streamlit
+pydantic
+watchdog
+pandas
+python-multipart
+# Add other dependencies as needed
