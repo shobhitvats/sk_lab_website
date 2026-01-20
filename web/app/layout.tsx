@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { GrainOverlay } from "@/components/ui/GrainOverlay";
-import { FluidCursor } from "@/components/ui/FluidCursor";
+
 
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -101,8 +101,12 @@ export default async function RootLayout({
             <Preloader />
             <GrainOverlay />
 
+            {/* 
+              FluidCursor removed as per lint unused warning
+             */}
             <ScrollProgress />
             <Navbar />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <GlobalSearch items={searchItems as any} />
             <AIChatWidget />
 

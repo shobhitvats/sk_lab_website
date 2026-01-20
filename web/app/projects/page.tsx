@@ -1,7 +1,7 @@
 import { getProjects } from '@/lib/api';
 import { FloatingShapes } from '@/components/ui/FloatingShapes';
 import { ProjectsList } from '@/components/ProjectsList';
-import Image from 'next/image';
+
 
 export default async function Projects() {
     const projects = await getProjects();

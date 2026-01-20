@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 
 interface Bubble {
     id: number;
@@ -24,87 +24,33 @@ const COLORS = [
     "bg-indigo-500",
 ];
 
+// Simple deterministic random to keep render pure
+function deterministicRandom(seed: number) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+}
+
 export function ResearchBubbles({ topics }: { topics: string[] }) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [bubbles, setBubbles] = useState<Bubble[]>([]);
-    const reqRef = useRef<number>(0);
-
-    useEffect(() => {
-        if (!topics.length) return;
-
-        // Initialize bubbles
-        const newBubbles = topics.map((topic, i) => ({
-            id: i,
-            text: topic,
-            x: Math.random() * 80 + 10, // Percent
-            y: Math.random() * 80 + 10, // Percent
-            vx: (Math.random() - 0.5) * 0.15,
-            vy: (Math.random() - 0.5) * 0.15,
-            radius: 8 + Math.random() * 4, // Visual size logic
-            color: COLORS[i % COLORS.length]
-        }));
-        setBubbles(newBubbles);
-
-        const updatePhysics = () => {
-            setBubbles(prev => {
-                return prev.map((b, i, arr) => {
-                    let { x, y, vx, vy } = b;
-
-                    // Wall collision (soft bounce)
-                    if (x <= 5 || x >= 95) vx *= -1;
-                    if (y <= 5 || y >= 95) vy *= -1;
-
-                    // Keep within bounds
-                    x = Math.max(5, Math.min(95, x + vx));
-                    y = Math.max(5, Math.min(95, y + vy));
-
-                    // Very simple repulsion from other bubbles
-                    /* 
-                       For a truly robust sim we'd need O(N^2) or quadtree, 
-                       but for <10 items, O(N^2) is fine. 
-                    */
-                    /*
-                    arr.forEach((other, j) => {
-                        if (i === j) return;
-                        const dx = x - other.x;
-                        const dy = y - other.y;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
-                        const minDist = 15; // approximate % distance
-                        if (dist < minDist) {
-                             const force = (minDist - dist) * 0.005;
-                             vx += (dx / dist) * force;
-                             vy += (dy / dist) * force;
-                        }
-                    });
-                    */
-
-                    // Add some random jitter for "brownian" motion feel
-                    vx += (Math.random() - 0.5) * 0.01;
-                    vy += (Math.random() - 0.5) * 0.01;
-
-                    // Dampen velocity limits
-                    const maxVel = 0.2;
-                    vx = Math.max(-maxVel, Math.min(maxVel, vx));
-                    vy = Math.max(-maxVel, Math.min(maxVel, vy));
-
-                    return { ...b, x, y, vx, vy };
-                });
-            });
-            reqRef.current = requestAnimationFrame(updatePhysics);
-        };
-
-        // reqRef.current = requestAnimationFrame(updatePhysics);
-        // Actually, let's keep it simpler for CPU efficiency: CSS Animation for float data, 
-        // JS only for initial placement to avoid overlapping if possible, or just purely CSS.
-        // The implementation_plan said "Custom Physics". Let's stick to a simpler CSS-based float
-        // to ensure 60fps and no hydration mismatches.
-
-        return () => cancelAnimationFrame(reqRef.current);
+    // Determine bubbles using useMemo with deterministic values
+    const bubbles = useMemo(() => {
+        return topics.map((topic, i) => {
+            const seed = topic.length + i * 100;
+            return {
+                id: i,
+                text: topic,
+                x: deterministicRandom(seed) * 80 + 10, // Percent
+                y: deterministicRandom(seed + 1) * 80 + 10, // Percent
+                vx: (deterministicRandom(seed + 2) - 0.5) * 0.15,
+                vy: (deterministicRandom(seed + 3) - 0.5) * 0.15,
+                radius: 8 + deterministicRandom(seed + 4) * 4, // Visual size logic
+                color: COLORS[i % COLORS.length]
+            };
+        });
     }, [topics]);
 
     // CSS-based Floating Bubble implementation for stability
     return (
-        <div ref={containerRef} className="relative w-full h-64 overflow-hidden bg-gradient-to-br from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl border border-black/5 dark:border-white/5 backdrop-blur-sm">
+        <div className="relative w-full h-64 overflow-hidden bg-gradient-to-br from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl border border-black/5 dark:border-white/5 backdrop-blur-sm">
             {bubbles.map((bubble, i) => (
                 <BubbleNode key={i} bubble={bubble} index={i} />
             ))}
@@ -113,9 +59,14 @@ export function ResearchBubbles({ topics }: { topics: string[] }) {
 }
 
 function BubbleNode({ bubble, index }: { bubble: Bubble, index: number }) {
-    // Random float animation params
-    const duration = 10 + Math.random() * 10;
-    const yOffset = 10 + Math.random() * 20;
+    // Use useMemo for random values to keep them pure during render
+    const { duration, yOffset } = useMemo(() => {
+        const seed = index * 123;
+        return {
+            duration: 10 + deterministicRandom(seed) * 10,
+            yOffset: 10 + deterministicRandom(seed + 1) * 20
+        };
+    }, [index]);
 
     return (
         <motion.div

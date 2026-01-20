@@ -3,6 +3,14 @@
 import { useTheme } from 'next-themes';
 import React, { useRef, useEffect } from 'react';
 
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+}
+
 export function ParticleBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { theme } = useTheme();
@@ -22,72 +30,61 @@ export function ParticleBackground() {
         const connectionDistance = 150;
         const mouseDistance = 200;
 
-        // Determine colors based on theme
-        // Default to dark mode (white particles) if undefined
+        // Determine colors
         const isLight = theme === 'light';
-        // Increased contrast for light mode (black particles)
         const particleColor = isLight ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.3)';
         const lineColor = isLight ? '0, 0, 0' : '255, 255, 255';
 
-        let mouse = { x: -1000, y: -1000 };
+        const mouse = { x: -1000, y: -1000 };
 
-        class Particle {
-            x: number;
-            y: number;
-            vx: number;
-            vy: number;
-            size: number;
+        const createParticle = (): Particle => ({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            size: Math.random() * 2 + 1
+        });
 
-            constructor() {
-                this.x = Math.random() * w;
-                this.y = Math.random() * h;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.size = Math.random() * 2 + 1;
+        const updateParticle = (p: Particle) => {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0 || p.x > w) p.vx *= -1;
+            if (p.y < 0 || p.y > h) p.vy *= -1;
+
+            const dx = mouse.x - p.x;
+            const dy = mouse.y - p.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < mouseDistance) {
+                const forceDirectionX = dx / distance;
+                const forceDirectionY = dy / distance;
+                const force = (mouseDistance - distance) / mouseDistance;
+                const directionX = forceDirectionX * force * 0.5;
+                const directionY = forceDirectionY * force * 0.5;
+
+                p.vx -= directionX;
+                p.vy -= directionY;
             }
+        };
 
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                if (this.x < 0 || this.x > w) this.vx *= -1;
-                if (this.y < 0 || this.y > h) this.vy *= -1;
-
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < mouseDistance) {
-                    const forceDirectionX = dx / distance;
-                    const forceDirectionY = dy / distance;
-                    const force = (mouseDistance - distance) / mouseDistance;
-                    const directionX = forceDirectionX * force * 0.5;
-                    const directionY = forceDirectionY * force * 0.5;
-
-                    this.vx -= directionX;
-                    this.vy -= directionY;
-                }
-            }
-
-            draw() {
-                if (!ctx) return;
-                ctx.fillStyle = particleColor;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        const drawParticle = (p: Particle) => {
+            ctx.fillStyle = particleColor;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        };
 
         for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
+            particles.push(createParticle());
         }
 
         const animate = () => {
             ctx.clearRect(0, 0, w, h);
 
             for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
+                updateParticle(particles[i]);
+                drawParticle(particles[i]);
 
                 for (let j = i; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;

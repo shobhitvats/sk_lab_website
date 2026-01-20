@@ -5,7 +5,6 @@ import { MagneticButton } from '@/components/ui/MagneticButton';
 import { CountUp } from '@/components/ui/CountUp';
 import { AuroraBackground } from '@/components/ui/AuroraBackground';
 import { ResearchBubbles } from '@/components/ui/ResearchBubbles';
-import Image from 'next/image';
 import { TextReveal } from '@/components/ui/TextReveal';
 import { ParallaxImage } from '@/components/ui/ParallaxImage';
 
@@ -29,7 +28,7 @@ export default async function Home() {
             <TextReveal text={labInfo.lab_name} className="inline-block" delay={0.2} />
           </div>
           <p className="max-w-2xl mx-auto text-xl md:text-2xl text-black/70 dark:text-muted-foreground font-light leading-relaxed animate-fade-in-up delay-100">
-            "{labInfo.mission_statement}"
+            &quot;{labInfo.mission_statement}&quot;
           </p>
 
           <div className="pt-8 flex justify-center gap-4 animate-fade-in-up delay-200">

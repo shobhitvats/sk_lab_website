@@ -21,7 +21,7 @@ export default async function Lab() {
                     {/* Mission Statement */}
                     <SpotlightCard className="md:col-span-3 p-10 bg-card border-border">
                         <h2 className="text-3xl font-serif text-foreground mb-6">Mission</h2>
-                        <p className="text-2xl font-light leading-relaxed text-muted-foreground">"{labInfo.mission_statement}"</p>
+                        <p className="text-2xl font-light leading-relaxed text-muted-foreground">&quot;{labInfo.mission_statement}&quot;</p>
                     </SpotlightCard>
                 </div>
 

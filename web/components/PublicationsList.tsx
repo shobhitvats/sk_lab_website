@@ -14,11 +14,7 @@ export function PublicationsList({ publications }: PublicationsListProps) {
     const [selectedYear, setSelectedYear] = useState<string>('All');
     const [citationModalOpen, setCitationModalOpen] = useState<string | null>(null); // DOI or Title as key
 
-    // Extract unique years
-    const years = useMemo(() => {
-        const y = new Set(publications.map(p => p.year.toString()));
-        return ['All', ...Array.from(y).sort((a, b) => Number(b) - Number(a))];
-    }, [publications]);
+
 
     // Filter logic
     const filteredPubs = useMemo(() => {

@@ -1,18 +1,8 @@
 import { getPeople } from '@/lib/api';
 import { FloatingShapes } from '@/components/ui/FloatingShapes';
 import { PeopleList } from '@/components/PeopleList';
-import Image from 'next/image';
-
 export default async function People() {
     const people = await getPeople();
-    const roles = [
-        "Principal Investigator",
-        "Postdoctoral Fellows",
-        "PhD Students",
-        "Masters Students",
-        "Undergraduate Students",
-        "Alumni"
-    ];
 
     return (
         <div className="min-h-screen text-foreground pt-32 pb-20 selection:bg-accent-500 selection:text-white">

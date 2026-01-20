@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react"; // Assuming lucide-react or similar icons are available, or I'll use the emojis/svgs from before
+// import { Moon, Sun } from "lucide-react"; 
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();
@@ -16,6 +16,7 @@ export function ThemeToggle() {
         const newTheme = theme === 'light' ? 'dark' : 'light';
 
         // Check for View Transition API support
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (!(document as any).startViewTransition) {
             setTheme(newTheme);
             return;
@@ -28,6 +29,7 @@ export function ThemeToggle() {
             Math.max(y, innerHeight - y)
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transition = (document as any).startViewTransition(() => {
             setTheme(newTheme);
         });
