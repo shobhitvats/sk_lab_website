@@ -1,0 +1,194 @@
+@import 'tailwindcss';
+@plugin 'tailwindcss-animate';
+
+/* View Transitions Logic */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@plugin '@tailwindcss/typography';
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Animation */
+  --animate-fade-in: fadeIn 0.8s ease-out forwards;
+  --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-aurora: aurora 60s linear infinite;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes aurora {
+    from {
+      background-position: 50% 50%, 50% 50%;
+    }
+
+    to {
+      background-position: 350% 50%, 350% 50%;
+    }
+  }
+}
+
+/* Base Styles via CSS Variables */
+:root {
+  /* Light Mode (Paper / Cream / Navy) */
+  --background: #fdfbf7;
+  /* Off-white paper */
+  --foreground: #0f172a;
+  /* Slate 900 */
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0f172a;
+  /* Navy */
+  --primary-foreground: #f8fafc;
+
+  --secondary: #e2e8f0;
+  /* Slate 200 */
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  /* Slate 100 */
+  --muted-foreground: #64748b;
+  /* Slate 500 */
+
+  --accent: #ca8a04;
+  /* Gold */
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0f172a;
+
+  --radius: 0.75rem;
+
+  --foreground-join: #000000;
+  --foreground-join-muted: rgba(0, 0, 0, 0.8);
+}
+
+.dark {
+  /* Dark Mode (Deep Space) */
+  --background: #020617;
+  /* Slate 950 */
+  --foreground: #f8fafc;
+  /* Slate 50 */
+
+  --card: #0f172a;
+  /* Slate 900 */
+  --card-foreground: #f8fafc;
+
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  --primary: #f8fafc;
+  --primary-foreground: #0f172a;
+
+  --secondary: #1e293b;
+  /* Slate 800 */
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #facc15;
+  /* Lighter Gold */
+  --accent-foreground: #000000;
+
+  --destructive: #7f1d1d;
+  --destructive-foreground: #f8fafc;
+
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #cbd5e1;
+
+  --foreground-join: #ffffff;
+  --foreground-join-muted: rgba(255, 255, 255, 0.8);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Utilities */
+.glass-panel {
+  background: color-mix(in srgb, var(--background), transparent 20%);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--foreground), transparent 90%);
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility text-fluid-h1 {
+  font-size: clamp(2.5rem, 5vw + 1rem, 6rem);
+  line-height: 1.1;
+}
+
+@utility text-fluid-h2 {
+  font-size: clamp(2rem, 4vw + 1rem, 4rem);
+  line-height: 1.2;
+}
+
+@utility font-ligatures {
+  font-feature-settings: "dlig", "swsh";
+}
