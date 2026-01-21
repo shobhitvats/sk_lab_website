@@ -3,4 +3,5 @@ pydantic
 watchdog
 pandas
 python-multipart
+email-validator
 # Add other dependencies as needed
