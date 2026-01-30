@@ -18,6 +18,7 @@ Click the button below to trigger a rebuild of the public website.
 
 if st.button("♻️ Rebuild Website Changes", type="primary"):
     with st.spinner("Rebuilding website... this may take a minute..."):
+        try:
             # pages -> admin -> root
             root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             web_dir = os.path.join(root_dir, "web")
