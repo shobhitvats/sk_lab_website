@@ -16,54 +16,59 @@ The website is **static**, meaning it needs to be rebuilt to show the changes yo
 Click the button below to trigger a rebuild of the public website.
 """)
 
+def ensure_node():
+    """Ensures Node.js 20+ is available. Returns the PATH or modifies env."""
+    # pages -> admin -> root
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    admin_dir = os.path.join(root_dir, "admin")
+    
+    # Check current version
+    try:
+        res = subprocess.run(["node", "-v"], capture_output=True, text=True)
+        if res.returncode == 0:
+            v_str = res.stdout.strip().lstrip("v") # e.g. 18.20.4
+            major = int(v_str.split(".")[0])
+            if major >= 20:
+                return os.environ.copy() # Good to go
+            st.warning(f"⚠️ System Node.js ({v_str}) is too old. Needed 20+. Switching to portable Node...")
+    except FileNotFoundError:
+        st.warning("⚠️ Node.js not found. Switching to portable Node...")
+
+    # Define portable path
+    node_dist_dir = os.path.join(admin_dir, "node_dist")
+    node_bin = os.path.join(node_dist_dir, "node-v22.11.0-linux-x64", "bin")
+    
+    if not os.path.exists(node_bin):
+        os.makedirs(node_dist_dir, exist_ok=True)
+        tar_path = os.path.join(node_dist_dir, "node.tar.xz")
+        
+        st.info("⬇️ Downloading Node.js v22 (standalone)...")
+        # Download
+        import urllib.request
+        url = "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz"
+        try:
+            urllib.request.urlretrieve(url, tar_path)
+            st.info("📦 Extracting Node.js...")
+            import tarfile
+            with tarfile.open(tar_path) as f:
+                f.extractall(node_dist_dir)
+            os.remove(tar_path)
+        except Exception as e:
+            st.error(f"Failed to download/setup Node.js: {e}")
+            st.stop()
+    
+    # Setup Envs
+    env = os.environ.copy()
+    env["PATH"] = f"{node_bin}:{env['PATH']}"
+    return env
+
 if st.button("♻️ Rebuild Website Changes", type="primary"):
+    with st.spinner("Rebuilding website... this may take a minute..."):
+        try:
             # pages -> admin -> root
             root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             web_dir = os.path.join(root_dir, "web")
-            admin_dir = os.path.join(root_dir, "admin")
             
-            def ensure_node():
-                """Ensures Node.js 20+ is available. Returns the PATH or modifies env."""
-                # Check current version
-                try:
-                    res = subprocess.run(["node", "-v"], capture_output=True, text=True)
-                    if res.returncode == 0:
-                        v_str = res.stdout.strip().lstrip("v") # e.g. 18.20.4
-                        major = int(v_str.split(".")[0])
-                        if major >= 20:
-                            return os.environ.copy() # Good to go
-                        st.warning(f"⚠️ System Node.js ({v_str}) is too old. Needed 20+. Switching to portable Node...")
-                except FileNotFoundError:
-                    st.warning("⚠️ Node.js not found. Switching to portable Node...")
-
-                # Define portable path
-                node_dist_dir = os.path.join(admin_dir, "node_dist")
-                node_bin = os.path.join(node_dist_dir, "node-v22.11.0-linux-x64", "bin")
-                
-                if not os.path.exists(node_bin):
-                    os.makedirs(node_dist_dir, exist_ok=True)
-                    tar_path = os.path.join(node_dist_dir, "node.tar.xz")
-                    
-                    st.info("⬇️ Downloading Node.js v22 (standalone)...")
-                    # Download
-                    import urllib.request
-                    url = "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz"
-                    try:
-                        urllib.request.urlretrieve(url, tar_path)
-                        st.info("📦 Extracting Node.js...")
-                        import tarfile
-                        with tarfile.open(tar_path) as f:
-                            f.extractall(node_dist_dir)
-                        os.remove(tar_path)
-                    except Exception as e:
-                        st.error(f"Failed to download/setup Node.js: {e}")
-                        st.stop()
-                
-                # Setup Envs
-                env = os.environ.copy()
-                env["PATH"] = f"{node_bin}:{env['PATH']}"
-                return env
-
             # Setup Node Environment
             build_env = ensure_node()
 
