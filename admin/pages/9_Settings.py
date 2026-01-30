@@ -9,109 +9,126 @@ if not check_password():
 
 st.title("⚙️ Settings & Deployment")
 
-st.markdown("""
-### 🚀 Publish Changes
+st.header("🚀 Deployment")
+st.info("Two-step process: **Preview** changes locally first, then **Publish** to make them live.")
 
-The website is **static**, meaning it needs to be rebuilt to show the changes you've made in this admin panel.
-Click the button below to trigger a rebuild of the public website.
-""")
+tab_preview, tab_publish = st.tabs(["1. Preview (Local)", "2. Publish (Live)"])
 
-def ensure_node():
-    """Ensures Node.js 20+ is available. Returns the PATH or modifies env."""
-    # pages -> admin -> root
-    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    admin_dir = os.path.join(root_dir, "admin")
+with tab_preview:
+    st.subheader("Test Changes Locally")
+    st.markdown("Run a local build to verify your edits before going live.")
     
-    # Check current version
-    try:
-        res = subprocess.run(["node", "-v"], capture_output=True, text=True)
-        if res.returncode == 0:
-            v_str = res.stdout.strip().lstrip("v") # e.g. 18.20.4
-            major = int(v_str.split(".")[0])
-            if major >= 20:
-                return os.environ.copy() # Good to go
-            st.warning(f"⚠️ System Node.js ({v_str}) is too old. Needed 20+. Switching to portable Node...")
-    except FileNotFoundError:
-        st.warning("⚠️ Node.js not found. Switching to portable Node...")
-
-    # Define portable path
-    node_dist_dir = os.path.join(admin_dir, "node_dist")
-    node_bin = os.path.join(node_dist_dir, "node-v22.11.0-linux-x64", "bin")
-    
-    if not os.path.exists(node_bin):
-        os.makedirs(node_dist_dir, exist_ok=True)
-        tar_path = os.path.join(node_dist_dir, "node.tar.xz")
+    def ensure_node():
+        """Ensures Node.js 20+ is available. Returns the PATH or modifies env."""
+        # pages -> admin -> root
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        admin_dir = os.path.join(root_dir, "admin")
         
-        st.info("⬇️ Downloading Node.js v22 (standalone)...")
-        # Download
-        import urllib.request
-        url = "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz"
+        # Check current version
         try:
-            urllib.request.urlretrieve(url, tar_path)
-            st.info("📦 Extracting Node.js...")
-            import tarfile
-            with tarfile.open(tar_path) as f:
-                f.extractall(node_dist_dir)
-            os.remove(tar_path)
-        except Exception as e:
-            st.error(f"Failed to download/setup Node.js: {e}")
-            st.stop()
-    
-    # Setup Envs
-    env = os.environ.copy()
-    env["PATH"] = f"{node_bin}:{env['PATH']}"
-    return env
+            res = subprocess.run(["node", "-v"], capture_output=True, text=True)
+            if res.returncode == 0:
+                v_str = res.stdout.strip().lstrip("v") # e.g. 18.20.4
+                major = int(v_str.split(".")[0])
+                if major >= 20:
+                    return os.environ.copy() # Good to go
+                st.warning(f"⚠️ System Node.js ({v_str}) is too old. Needed 20+. Switching to portable Node...")
+        except FileNotFoundError:
+            st.warning("⚠️ Node.js not found. Switching to portable Node...")
 
-if st.button("♻️ Rebuild Website Changes", type="primary"):
-    with st.spinner("Rebuilding website... this may take a minute..."):
-        try:
-            # pages -> admin -> root
-            root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            web_dir = os.path.join(root_dir, "web")
+        # Define portable path
+        node_dist_dir = os.path.join(admin_dir, "node_dist")
+        node_bin = os.path.join(node_dist_dir, "node-v22.11.0-linux-x64", "bin")
+        
+        if not os.path.exists(node_bin):
+            os.makedirs(node_dist_dir, exist_ok=True)
+            tar_path = os.path.join(node_dist_dir, "node.tar.xz")
             
-            # Setup Node Environment
-            build_env = ensure_node()
+            st.info("⬇️ Downloading Node.js v22 (standalone)...")
+            # Download
+            import urllib.request
+            url = "https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz"
+            try:
+                urllib.request.urlretrieve(url, tar_path)
+                st.info("📦 Extracting Node.js...")
+                import tarfile
+                with tarfile.open(tar_path) as f:
+                    f.extractall(node_dist_dir)
+                os.remove(tar_path)
+            except Exception as e:
+                st.error(f"Failed to download/setup Node.js: {e}")
+                st.stop()
+        
+        # Setup Envs
+        env = os.environ.copy()
+        env["PATH"] = f"{node_bin}:{env['PATH']}"
+        return env
 
-            # Check for node_modules 
-            node_modules_path = os.path.join(web_dir, "node_modules")
-            if not os.path.exists(node_modules_path):
-                st.warning("⚠️ dependencies not found. Installing... (this happens once)")
-                install_cmd = ["npm", "ci"] if os.path.exists(os.path.join(web_dir, "package-lock.json")) else ["npm", "install"]
+    if st.button("♻️ Build & Preview", type="primary"):
+        with st.spinner("Building local preview..."):
+            try:
+                root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                web_dir = os.path.join(root_dir, "web")
                 
-                install_res = subprocess.run(
-                    install_cmd,
-                    cwd=web_dir,
-                    capture_output=True,
-                    text=True,
-                    env=build_env
-                )
+                build_env = ensure_node()
                 
-                if install_res.returncode != 0:
-                     st.error("❌ Dependency installation failed!")
-                     st.code(install_res.stderr)
-                     st.stop()
+                # Check Dependencies
+                node_modules_path = os.path.join(web_dir, "node_modules")
+                if not os.path.exists(node_modules_path):
+                    st.warning("Dependencies not found. Installing...")
+                    install_cmd = ["npm", "ci"] if os.path.exists(os.path.join(web_dir, "package-lock.json")) else ["npm", "install"]
+                    subprocess.run(install_cmd, cwd=web_dir, capture_output=True, env=build_env)
+
+                # Build
+                result = subprocess.run(["npm", "run", "build"], cwd=web_dir, capture_output=True, text=True, env=build_env)
+                
+                if result.returncode == 0:
+                    st.success("✅ Preview Built! Check the main URL.")
+                    with st.expander("Build Logs"):
+                        st.code(result.stdout)
                 else:
-                    st.success("✅ Dependencies installed.")
+                    st.error("❌ Build Failed")
+                    st.error(result.stderr)
+            except Exception as e:
+                st.error(f"Error: {e}")
 
-            # Run npm run build
-            st.info("Building website...")
-            result = subprocess.run(
-                ["npm", "run", "build"], 
-                cwd=web_dir, 
-                capture_output=True, 
-                text=True,
-                env=build_env
-            )
-            
-            if result.returncode == 0:
-                st.success("✅ Website successfully rebuilt!")
-                with st.expander("Show Build Logs"):
-                    st.code(result.stdout)
-            else:
-                st.error("❌ Build failed!")
-                st.error(result.stderr)
-        except Exception as e:
-            st.error(f"Error triggering build: {e}")
+with tab_publish:
+    st.subheader("Update Public Website")
+    st.markdown("Pushes your data changes to GitHub, triggering a live update.")
+    
+    if st.button("🚀 Publish to Live Website"):
+        if "GITHUB_TOKEN" not in st.secrets:
+            st.error("❌ `GITHUB_TOKEN` not found in Secrets. Cannot push.")
+        else:
+            with st.spinner("Pushing changes to GitHub..."):
+                try:
+                    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                    
+                    # Git Config
+                    subprocess.run(["git", "config", "user.name", "Streamlit Admin"], cwd=root_dir)
+                    subprocess.run(["git", "config", "user.email", "admin@generated.com"], cwd=root_dir)
+                    
+                    # Add Data
+                    subprocess.run(["git", "add", "data/*.json"], cwd=root_dir)
+                    
+                    # Commit
+                    status = subprocess.run(["git", "status", "--porcelain"], cwd=root_dir, capture_output=True, text=True)
+                    if not status.stdout:
+                        st.info("⚠️ No changes to publish.")
+                    else:
+                        subprocess.run(["git", "commit", "-m", "update: content from admin panel"], cwd=root_dir)
+                        
+                        # Push
+                        repo_url = f"https://{st.secrets['GITHUB_TOKEN']}@github.com/{st.secrets.get('GITHUB_REPO', 'shobhitvats/sk_lab_website')}.git"
+                        push_res = subprocess.run(["git", "push", repo_url, "HEAD:main"], cwd=root_dir, capture_output=True, text=True)
+                        
+                        if push_res.returncode == 0:
+                            st.success("✅ Changes Pushed! The live site will update in ~2 minutes.")
+                        else:
+                            st.error("❌ Push Failed")
+                            st.code(push_res.stderr)
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 st.divider()
 
