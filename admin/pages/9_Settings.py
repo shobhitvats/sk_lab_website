@@ -23,25 +23,81 @@ if st.button("♻️ Rebuild Website Changes", type="primary"):
             root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             web_dir = os.path.join(root_dir, "web")
             
-            # Run npm run build
-            result = subprocess.run(
-                ["npm", "run", "build"], 
-                cwd=web_dir, 
-                capture_output=True, 
-                text=True
-            )
-            
-            if result.returncode == 0:
-                st.success("✅ Website successfully rebuilt!")
-                with st.expander("Show Build Logs"):
-                    st.code(result.stdout)
-            else:
-                st.error("❌ Build failed!")
-                st.error(result.stderr)
+            try:
+                # Local Mode: Try direct build
+                # Check if npm exists first implicitly by running it
+                result = subprocess.run(
+                    ["npm", "run", "build"], 
+                    cwd=web_dir, 
+                    capture_output=True, 
+                    text=True
+                )
+                
+                if result.returncode == 0:
+                    st.success("✅ Website successfully rebuilt!")
+                    with st.expander("Show Build Logs"):
+                        st.code(result.stdout)
+                else:
+                    st.error("❌ Build failed!")
+                    st.error(result.stderr)
+                    
+            except FileNotFoundError:
+                # Cloud Mode: Fallback to Git Push
+                st.warning("⚠️ 'npm' not found. Switching to Cloud Deployment mode.")
+                
+                github_token = st.secrets.get("GITHUB_TOKEN")
+                github_repo = st.secrets.get("GITHUB_REPO") # e.g. "username/repo"
+                
+                if not github_token:
+                    st.error("❌ Missing Secrets: 'GITHUB_TOKEN' not found in Streamlit Secrets.")
+                    st.info("Please add your GitHub Personal Access Token to Streamlit App Settings -> Secrets.")
+                    st.stop()
+                    
+                if not github_repo:
+                    # Try to infer from git remote if possible, but secrets is safer
+                    st.error("❌ Missing Secrets: 'GITHUB_REPO' not found (format: 'user/repo').")
+                    st.stop()
+                    
+                try:
+                    # Configure Git Identity (Required for CI/Cloud environments)
+                    subprocess.run(["git", "config", "user.email", "admin@sklab.com"], cwd=root_dir)
+                    subprocess.run(["git", "config", "user.name", "Streamlit Admin"], cwd=root_dir)
+                    
+                    # Stage all changes (data json, uploaded images)
+                    subprocess.run(["git", "add", "."], cwd=root_dir)
+                    
+                    # Commit
+                    commit_res = subprocess.run(
+                        ["git", "commit", "-m", "Update content via Admin Dashboard"], 
+                        cwd=root_dir, 
+                        capture_output=True, 
+                        text=True
+                    )
+                    
+                    if commit_res.returncode != 0 and "nothing to commit" in commit_res.stdout:
+                        st.info("No content changes detected to publish.")
+                    elif commit_res.returncode != 0:
+                        st.error(f"Git commit failed: {commit_res.stderr}")
+                    else:
+                        # Push with Token Authentication
+                        remote_url = f"https://{github_token}@github.com/{github_repo}.git"
+                        push_res = subprocess.run(
+                            ["git", "push", remote_url, "HEAD:main"], 
+                            cwd=root_dir, 
+                            capture_output=True, 
+                            text=True
+                        )
+                        
+                        if push_res.returncode == 0:
+                            st.success("✅ Changes pushed to GitHub! The site is rebuilding and will be live in a few minutes.")
+                        else:
+                            st.error(f"Git push failed: {push_res.stderr}")
+                            
+                except Exception as e:
+                    st.error(f"Git operations failed: {e}")
+
         except Exception as e:
             st.error(f"Error triggering build: {e}")
-
-    st.error(f"Error triggering build: {e}")
 
 st.divider()
 
