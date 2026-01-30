@@ -127,6 +127,8 @@ with tab_publish:
                         else:
                             st.error("❌ Push Failed")
                             st.code(push_res.stderr)
+                            if "403" in push_res.stderr:
+                                st.warning("💡 Tip: A 403 error usually means your GitHub Token is missing permissions. \n\n1. Go to GitHub Tokens.\n2. Regenerate your token.\n3. **IMPORTANT**: Check the box that says **'repo'** (Full control of private repositories).\n4. Update secrets in Streamlit.")
                 except Exception as e:
                     st.error(f"Error: {e}")
 
